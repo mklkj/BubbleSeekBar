@@ -200,7 +200,7 @@ public class BubbleSeekBar extends View {
         mPaint.setTextAlign(Paint.Align.CENTER);
 
         mRectText = new Rect();
-        mTextSpace = dp2px(2);
+        mTextSpace = dp2px(8);
 
         initConfigByPriority();
 
