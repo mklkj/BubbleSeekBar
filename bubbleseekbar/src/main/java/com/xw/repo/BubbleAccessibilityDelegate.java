@@ -26,9 +26,13 @@ public class BubbleAccessibilityDelegate extends AccessibilityDelegateCompat {
         }
     }
 
-    @Override
-    public void onPopulateAccessibilityEvent(View host, AccessibilityEvent event) {
-        super.onPopulateAccessibilityEvent(host, event);
+    private void scheduleAccessibilityEventSender() {
+        if (mAccessibilityEventSender == null) {
+            mAccessibilityEventSender = new AccessibilityEventSender();
+        } else {
+            bubbleSeekBar.removeCallbacks(mAccessibilityEventSender);
+        }
+        bubbleSeekBar.postDelayed(mAccessibilityEventSender, TIMEOUT_SEND_ACCESSIBILITY_EVENT);
     }
 
     @Override
@@ -36,6 +40,24 @@ public class BubbleAccessibilityDelegate extends AccessibilityDelegateCompat {
         super.onInitializeAccessibilityEvent(host, event);
         event.setItemCount((int) (bubbleSeekBar.getMax() - bubbleSeekBar.getMin()));
         event.setCurrentItemIndex(bubbleSeekBar.getProgress());
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfoCompat info) {
+        AccessibilityNodeInfoCompat.RangeInfoCompat rangeInfo = AccessibilityNodeInfoCompat.RangeInfoCompat.obtain(
+                AccessibilityNodeInfoCompat.RangeInfoCompat.RANGE_TYPE_INT,
+                bubbleSeekBar.getMin(), bubbleSeekBar.getMax(), bubbleSeekBar.getProgress()
+        );
+        info.setRangeInfo(rangeInfo);
+
+        final int progress = bubbleSeekBar.getProgress();
+        if (progress > bubbleSeekBar.getMin()) {
+            info.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_SCROLL_BACKWARD);
+        }
+        if (progress < bubbleSeekBar.getMax()) {
+            info.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_SCROLL_FORWARD);
+        }
+        super.onInitializeAccessibilityNodeInfo(host, info);
     }
 
     @Override
@@ -56,32 +78,5 @@ public class BubbleAccessibilityDelegate extends AccessibilityDelegateCompat {
         }
 
         return super.performAccessibilityAction(host, action, args);
-    }
-
-    private void scheduleAccessibilityEventSender() {
-        if (mAccessibilityEventSender == null) {
-            mAccessibilityEventSender = new AccessibilityEventSender();
-        } else {
-            bubbleSeekBar.removeCallbacks(mAccessibilityEventSender);
-        }
-        bubbleSeekBar.postDelayed(mAccessibilityEventSender, TIMEOUT_SEND_ACCESSIBILITY_EVENT);
-    }
-
-    @Override
-    public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfoCompat info) {
-        AccessibilityNodeInfoCompat.RangeInfoCompat rangeInfo = AccessibilityNodeInfoCompat.RangeInfoCompat.obtain(
-                AccessibilityNodeInfoCompat.RangeInfoCompat.RANGE_TYPE_INT,
-                bubbleSeekBar.getMin(), bubbleSeekBar.getMax(), bubbleSeekBar.getProgress()
-        );
-        info.setRangeInfo(rangeInfo);
-
-        final int progress = bubbleSeekBar.getProgress();
-        if (progress > bubbleSeekBar.getMin()) {
-            info.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_SCROLL_BACKWARD);
-        }
-        if (progress < bubbleSeekBar.getMax()) {
-            info.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_SCROLL_FORWARD);
-        }
-        super.onInitializeAccessibilityNodeInfo(host, info);
     }
 }
