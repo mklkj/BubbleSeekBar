@@ -19,10 +19,6 @@ import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
-import androidx.annotation.ColorInt;
-import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.Gravity;
@@ -33,6 +29,13 @@ import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
+import android.widget.SeekBar;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 
 import com.xw.repo.bubbleseekbar.R;
 
@@ -80,7 +83,7 @@ public class BubbleSeekBar extends View {
     private int mSectionTextSize; // text size of section-text
     private int mSectionTextColor; // text color of section-text
     @TextPosition
-    private int mSectionTextPosition = NONE; // text position of section-text relative to track
+    private int mSectionTextPosition; // text position of section-text relative to track
     private int mSectionTextInterval; // the interval of two section-text
     private boolean isShowThumbText; // show real time progress-text under thumb or not
     private int mThumbTextSize; // text size of progress-text
@@ -137,8 +140,18 @@ public class BubbleSeekBar extends View {
         this(context, attrs, 0);
     }
 
+    @Override
+    public CharSequence getAccessibilityClassName() {
+        return SeekBar.class.getName();
+    }
+
     public BubbleSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
+        if (getImportantForAccessibility() == View.IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
+            setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        }
+        ViewCompat.setAccessibilityDelegate(this, new BubbleAccessibilityDelegate(this));
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.BubbleSeekBar, defStyleAttr, 0);
         mMin = a.getFloat(R.styleable.BubbleSeekBar_bsb_min, 0.0f);
@@ -188,7 +201,7 @@ public class BubbleSeekBar extends View {
         isTouchToSeek = a.getBoolean(R.styleable.BubbleSeekBar_bsb_touch_to_seek, false);
         isAlwaysShowBubble = a.getBoolean(R.styleable.BubbleSeekBar_bsb_always_show_bubble, false);
         duration = a.getInteger(R.styleable.BubbleSeekBar_bsb_always_show_bubble_delay, 0);
-        mAlwaysShowBubbleDelay = duration < 0 ? 0 : duration;
+        mAlwaysShowBubbleDelay = Math.max(duration, 0);
         isHideBubble = a.getBoolean(R.styleable.BubbleSeekBar_bsb_hide_bubble, false);
         isRtl = a.getBoolean(R.styleable.BubbleSeekBar_bsb_rtl, false);
         setEnabled(a.getBoolean(R.styleable.BubbleSeekBar_android_enabled, isEnabled()));
@@ -378,13 +391,13 @@ public class BubbleSeekBar extends View {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        int height = mThumbRadiusOnDragging * 2; // 默认高度为拖动时thumb圆的直径
+        int height = mThumbRadiusOnDragging * 2; // The default height is the diameter of the thumb circle when dragging
         if (isShowThumbText) {
             mPaint.setTextSize(mThumbTextSize);
             mPaint.getTextBounds("j", 0, 1, mRectText); // j is the highest of all letters and numbers
-            height += mRectText.height(); // 如果显示实时进度，则原来基础上加上进度文字高度和间隔
+            height += mRectText.height(); // If the real-time progress is displayed, the progress text height and interval will be added on the original basis
         }
-        if (isShowSectionText && mSectionTextPosition >= TextPosition.BOTTOM_SIDES) { // 如果Section值在track之下显示，比较取较大值
+        if (isShowSectionText && mSectionTextPosition >= TextPosition.BOTTOM_SIDES) { // If the Section value is displayed below the track, the larger value is chosen
             mPaint.setTextSize(mSectionTextSize);
             mPaint.getTextBounds("j", 0, 1, mRectText);
             height = Math.max(height, mThumbRadiusOnDragging * 2 + mRectText.height());
@@ -459,10 +472,12 @@ public class BubbleSeekBar extends View {
      * changing, the result is mBubbleCenterRawX. At last the WindowManager calls updateViewLayout()
      * to update the LayoutParameter.x of the BubbleView.
      * <p>
-     * 气泡BubbleView实际是通过WindowManager动态添加的一个视图，因此与SeekBar唯一的位置联系就是它们在屏幕上的
-     * 绝对坐标。
-     * 先计算进度mProgress为mMin时BubbleView的中心坐标（mBubbleCenterRawSolidX，mBubbleCenterRawSolidY），
-     * 然后根据进度来增量计算横坐标mBubbleCenterRawX，再动态设置LayoutParameter.x，就实现了气泡跟随滑动移动。
+     * BubbleView is actually a view dynamically added by WindowManager, so the only position
+     * associated with SeekBar is their absolute coordinates on the screen.
+     * First calculate the center coordinates of BubbleView (mBubbleCenterRawSolidX, mBubbleCenterRawSolidY)
+     * when the progress mProgress is mMin, then incrementally calculate the abscissa mBubbleCenterRawX
+     * according to the progress, and then dynamically set LayoutParameter.x to achieve the bubble
+     * to follow the sliding movement.
      */
     private void locatePositionInWindow() {
         getLocationInWindow(mPoint);
