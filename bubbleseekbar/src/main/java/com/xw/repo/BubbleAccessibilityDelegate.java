@@ -42,11 +42,15 @@ public class BubbleAccessibilityDelegate extends AccessibilityDelegateCompat {
     public boolean performAccessibilityAction(View host, int action, Bundle args) {
         switch (action) {
             case AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:
-                bubbleSeekBar.setProgress(bubbleSeekBar.getProgress() - 1);
+                if (bubbleSeekBar.getProgress() > bubbleSeekBar.getMin())
+                    bubbleSeekBar.setProgress(bubbleSeekBar.getProgress() - 1);
+
                 scheduleAccessibilityEventSender();
                 return true;
             case AccessibilityNodeInfo.ACTION_SCROLL_FORWARD:
-                bubbleSeekBar.setProgress(bubbleSeekBar.getProgress() + 1);
+                if (bubbleSeekBar.getProgress() < bubbleSeekBar.getMax())
+                    bubbleSeekBar.setProgress(bubbleSeekBar.getProgress() + 1);
+
                 scheduleAccessibilityEventSender();
                 return true;
         }

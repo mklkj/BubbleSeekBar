@@ -144,6 +144,7 @@
         android:layout_marginTop="8dp"
         app:bsb_second_track_color="@color/color_blue"
         app:bsb_section_count="10"
+        android:contentDescription="@string/app_name"
         app:bsb_section_text_position="below_section_mark"
         app:bsb_touch_to_seek="true"/>
 </LinearLayout>
