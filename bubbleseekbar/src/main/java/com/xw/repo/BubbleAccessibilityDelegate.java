@@ -22,7 +22,7 @@ public class BubbleAccessibilityDelegate extends AccessibilityDelegateCompat {
 
     private class AccessibilityEventSender implements Runnable {
         public void run() {
-            sendAccessibilityEvent(bubbleSeekBar, AccessibilityEvent.TYPE_VIEW_SELECTED);
+            sendAccessibilityEvent(bubbleSeekBar, AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED);
         }
     }
 
