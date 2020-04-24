@@ -49,6 +49,7 @@ public class BubbleAccessibilityDelegate extends AccessibilityDelegateCompat {
                 bubbleSeekBar.getMin(), bubbleSeekBar.getMax(), bubbleSeekBar.getProgress()
         );
         info.setRangeInfo(rangeInfo);
+        info.setTooltipText(bubbleSeekBar.getCurrentSectionName());
 
         final int progress = bubbleSeekBar.getProgress();
         if (progress > bubbleSeekBar.getMin()) {
